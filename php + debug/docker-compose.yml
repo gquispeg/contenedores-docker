@@ -1,0 +1,42 @@
+services:
+  db:
+    image: mysql:5.7.44
+    container_name: desarrollo_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: scmj010400
+      TZ: 'America/Lima'
+    restart: always
+    ports:
+      - "3308:3306"
+    volumes:
+      - ./mysql:/var/lib/mysql
+      - ./my.cnf:/etc/mysql/my.cnf
+
+  app:
+    image: php-debug:8.3-rc-apache
+    container_name: desarrollo_app
+    build:
+      context: .
+      dockerfile: dockerfiles/php.dockerfile
+    environment:
+      XDEBUG_MODE: develop, debug
+      XDEBUG_CONFIG:
+        client_host=host.docker.internal
+        start_with_request=yes
+    restart: always
+    ports:
+      - 83:80
+    volumes:
+      - ./php.ini://usr/local/etc/php/php.ini
+      - ./www:/var/www/html
+      - ./xdebug.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    depends_on:
+      - db
+
+  composer:
+    image: composer:1.9
+    command: install
+    volumes:
+      - ./compose:/app
